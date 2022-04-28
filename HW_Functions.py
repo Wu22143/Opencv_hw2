@@ -1,8 +1,6 @@
-from ast import IsNot
 from fileinput import filename
 from glob import glob
-from tkinter.tix import Tree
-from unittest import result
+from time import sleep
 from PIL import ImageTk, Image
 from cProfile import label
 import tkinter as tk , numpy as np
@@ -11,11 +9,14 @@ from matplotlib import pyplot as plt
 import cv2 as cv
 from tkinter import filedialog , messagebox
 import tkinter
+import math
+
+from scipy.fft import dst
 
 def trackChaned(x):
     pass
 
-point_matrix = np.zeros((4,2),np.int)
+point_matrix = np.zeros((4,2),np.int32)
 counter = 0
 
 #滑鼠事件
@@ -215,7 +216,7 @@ class MyFunctions():
         global counter , point_matrix
         tmp_img = self.img.copy()
         counter = 0
-        point_matrix = np.zeros((4,2),np.int)
+        point_matrix = np.zeros((4,2),np.int32)
         while True:
             for x in range (0,4):
                 cv.circle(tmp_img,(point_matrix[x][0],point_matrix[x][1]),3,(0,255,0),cv.FILLED)
@@ -223,12 +224,12 @@ class MyFunctions():
             if counter == 4:
                 left_up_x = point_matrix[0][0]
                 left_up_y = point_matrix[0][1]
-                left_down_x = point_matrix[1][0]
-                left_down_y = point_matrix[1][1]
-                right_up_x = point_matrix[2][0]
-                right_up_y = point_matrix[2][1]
-                right_down_x = point_matrix[3][0]
-                right_down_y = point_matrix[3][1]
+                right_up_x = point_matrix[1][0]
+                right_up_y = point_matrix[1][1]
+                right_down_x = point_matrix[2][0]
+                right_down_y = point_matrix[2][1]
+                left_down_x = point_matrix[3][0]
+                left_down_y = point_matrix[3][1]
                 
             cv.imshow("Perspective", tmp_img)
             cv.setMouseCallback("Perspective",mousePoints)
@@ -237,7 +238,7 @@ class MyFunctions():
                 cv.destroyAllWindows()
                 break
             
-        pts_o = np.float32([[left_up_x, left_up_y], [left_down_x, left_down_y], [right_up_x, right_up_y], [right_down_x, right_down_y]])
+        pts_o = np.float32([[left_up_x, left_up_y],[right_up_x, right_up_y],[left_down_x, left_down_y],[right_down_x, right_down_y]])
         pts_d = np.float32([[0, 0], [600, 0], [0, 600], [600, 600]])
         M = cv.getPerspectiveTransform(pts_o,pts_d)
         dst = cv.warpPerspective(self.img,M,(600,600))
@@ -245,4 +246,91 @@ class MyFunctions():
         dst = cv.cvtColor(dst,cv.COLOR_BGR2RGB)
         self.reload(dst)
 
-        
+#canny detector Week8
+    def canny_detector(self):
+        ratio = 3
+        kernel_size = 3
+        # the callback function for trackbar
+        cv.namedWindow('Edge Map',)
+        cv.createTrackbar('Min Threshold', 'Edge Map', 0, 100, trackChaned)
+        src = self.img.copy()
+        src_gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+        while True:
+            low_threshold = cv.getTrackbarPos("Min Threshold", "Edge Map")
+            print(low_threshold)
+            img_blur = cv.blur(src_gray, (3, 3))
+            detected_edges = cv.Canny(img_blur, low_threshold, low_threshold * ratio, kernel_size)
+            mask = detected_edges != 0
+            dst = src * (mask[:, :, None].astype(src.dtype))
+            cv.imshow('Edge Map', dst)
+            if cv.waitKey(1) == ord("c"):
+                self.save_img = dst
+                dst = cv.cvtColor(dst,cv.COLOR_BGR2RGB)
+                self.reload(dst)
+                break
+
+#霍夫轉換
+    def hough_transform(self):
+        src = self.img.copy()
+        dst = cv.Canny(src,50,200,None,3)
+
+        cdstP = np.copy(self.img)
+
+        lines = cv.HoughLines(dst, 1, np.pi / 180, 150, None, 0, 0)
+
+        if lines is not None:
+            for i in range(0, len(lines)):
+                rho = lines[i][0][0]
+                theta = lines[i][0][1]
+                a = math.cos(theta)
+                b = math.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
+                pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
+                cv.line(src, pt1, pt2, (0, 0, 255), 3, cv.LINE_AA)
+
+        linesP = cv.HoughLinesP(dst, 1, np.pi / 180, 50, None, 50, 10)
+
+        if linesP is not None:
+            for i in range(0, len(linesP)):
+                l = linesP[i][0]
+                cv.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0, 0, 255), 3, cv.LINE_AA)
+
+        cv.imshow("Detected Lines (in red) - Standard Hough Line Transform", src)
+        cv.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+
+    #coner harris week11
+
+    def cornerHarris_event_handler(self,val):
+        print(1)
+        thresh = val
+        blockSize = 2
+        apertureSize = 3
+        k = 0.04
+        src = cv.cvtColor(self.img,cv.COLOR_BGR2GRAY)
+
+        dst = cv.cornerHarris(src, blockSize, apertureSize, k)
+
+        dst_norm = np.empty(dst.shape, dtype=np.float32)
+        cv.normalize(dst, dst_norm, alpha=0, beta=255, norm_type=cv.NORM_MINMAX)
+        dst_norm_scaled = cv.convertScaleAbs(dst_norm)
+
+        for i in range(dst_norm.shape[0]):
+            for j in range(dst_norm.shape[1]):
+                if int(dst_norm[i, j]) > thresh:
+                    cv.circle(dst_norm_scaled, (j, i), 5, (0), 2)
+
+        cv.namedWindow('Source image')
+        cv.imshow('Corners detected', dst_norm_scaled)
+
+    def conrer_Harris(self):
+        src = cv.cvtColor(self.img,cv.COLOR_BGR2GRAY)
+        source_window = 'Source image'
+        max_thresh = 255
+        thresh = 200
+        cv.namedWindow(source_window)
+        cv.createTrackbar('Threshold: ',source_window,200,max_thresh,self.cornerHarris_event_handler)
+        cv.imshow(source_window,src)
+        self.cornerHarris_event_handler(thresh)
+        cv.waitKey()
