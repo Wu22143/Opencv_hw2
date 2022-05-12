@@ -440,3 +440,81 @@ class MyFunctions():
         cv.createTrackbar('Threshold: ', source_window, thresh, max_thresh, convex_hull_callback)
         convex_hull_callback(thresh)
         cv.waitKey()
+
+#week13 Add basic_morphology and Advanced_morphology
+
+    def basic_morphology(self):
+        src = self.img.copy()
+        src_gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+        # convert to binary image
+        ret, src_thresh = cv.threshold(src_gray, 127, 255, 0)
+        # show the thresholded image
+        cv.imshow("Thresholded Image", src_thresh)
+
+        # erosion
+        erosion_size = 3
+        erosion_element = cv.getStructuringElement(cv.MORPH_RECT, (2 * erosion_size + 1, 2 * erosion_size + 1),
+                                                   (erosion_size, erosion_size))
+        erosion_dst = cv.erode(src_thresh, erosion_element)
+        cv.imshow("Erosion", erosion_dst)
+
+        # dilation
+        dilation_size = 3
+        dilation_element = cv.getStructuringElement(cv.MORPH_RECT, (2 * dilation_size + 1, 2 * dilation_size + 1),
+                                                    (dilation_size, dilation_size))
+        dilation_dst = cv.dilate(src_thresh, dilation_element)
+        cv.imshow("Dilation", dilation_dst)
+
+        # opening
+        opening_size = 3
+        opening_element = cv.getStructuringElement(cv.MORPH_RECT, (2 * opening_size + 1, 2 * opening_size + 1),
+                                                   (opening_size, opening_size))
+        opening_dst = cv.morphologyEx(src_thresh, cv.MORPH_OPEN, opening_element)
+        cv.imshow("Opening", opening_dst)
+
+        cv.waitKey()
+
+    def Advanced_Morphology(self):
+
+        def morph_shape(val):
+            if val == 0:
+                return cv.MORPH_RECT
+            elif val == 1:
+                return cv.MORPH_CROSS
+            elif val == 2:
+                return cv.MORPH_ELLIPSE
+
+        def erosion(val):
+            erosion_size = cv.getTrackbarPos(kernel_size, erosion_window)
+            erosion_shape = morph_shape(cv.getTrackbarPos(element_shape, erosion_window))
+
+            element = cv.getStructuringElement(erosion_shape, (2 * erosion_size + 1, 2 * erosion_size + 1),
+                                               (erosion_size, erosion_size))
+
+            erosion_dst = cv.erode(src, element)
+            cv.imshow(erosion_window, erosion_dst)
+
+        def dilatation(val):
+            dilatation_size = cv.getTrackbarPos(kernel_size, dilation_window)
+            dilation_shape = morph_shape(cv.getTrackbarPos(element_shape, dilation_window))
+            element = cv.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),
+                                               (dilatation_size, dilatation_size))
+            dilatation_dst = cv.dilate(src, element)
+            cv.imshow(dilation_window, dilatation_dst)
+
+        max_elem = 2
+        max_kernel_size = 21
+        element_shape = 'Element:\n 0: Rect \n 1: Cross \n 2: Ellipse'
+        kernel_size = 'Kernel size:\n 2n +1'
+        erosion_window = 'Erosion Demo'
+        dilation_window = 'Dilation Demo'
+
+        src = self.img.copy()
+        cv.namedWindow(erosion_window)
+        cv.createTrackbar(element_shape, erosion_window, 0, max_elem, erosion)
+        cv.createTrackbar(kernel_size, erosion_window, 0, max_kernel_size, erosion)
+        cv.namedWindow(dilation_window)
+        cv.createTrackbar(element_shape, dilation_window, 0, max_elem, dilatation)
+        cv.createTrackbar(kernel_size, dilation_window, 0, max_kernel_size, dilatation)
+        erosion(0)
+        dilatation(0)
