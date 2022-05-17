@@ -53,6 +53,8 @@ class App():
         self.menu_imageprocess.add_command(label='simple contour',command=self.functions.simple_contour)
         self.menu_imageprocess.add_command(label='find_contour',command=self.functions.find_contour)
         self.menu_imageprocess.add_command(label='bounding_box',command=self.functions.bounding_box)
+        self.menu_imageprocess.add_command(label='convex_hull',command=self.functions.convex_hull)
+
         self.menu_filter.add_command(label='中值濾波',command=self.functions.Median_filter)
         self.menu_filter.add_command(label='均值濾波',command=self.functions.averaging_filter)
         self.menu_filter.add_command(label='高斯濾波',command=self.functions.Gaussian_filter)

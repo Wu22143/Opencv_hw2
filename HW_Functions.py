@@ -11,8 +11,6 @@ from tkinter import filedialog , messagebox
 import tkinter
 import math ,random
 
-from scipy.fft import dst
-
 def trackChaned(x):
     pass
 
@@ -335,7 +333,7 @@ class MyFunctions():
         self.cornerHarris_event_handler(thresh)
         cv.waitKey()
 
-#week12 add simple_contour , find_contour , bounding_box
+#week12 add simple_contour , find_contour , bounding_box , convex_hull
     def simple_contour(self):
         src = self.img.copy()
         src_gray = cv.cvtColor(src,cv.COLOR_BGR2GRAY)
