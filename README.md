@@ -20,3 +20,13 @@
 7.仿射轉換(Affine Transform)-(平移 , 旋轉)
 
 8.透視變換(Perspective Transformation)
+
+week8 新增 Canny detector 、 hough transform
+
+week11 新增 Coner Harris
+
+week12 新增 simple_contour 、 find_contour 、 bounding box 、 convex_hull
+
+week13 新增 basic_morphology 、 Advanced_morphology
+
+
