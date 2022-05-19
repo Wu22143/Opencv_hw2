@@ -1,5 +1,6 @@
 # Opencv_hw3
-4A8G0023_OpenCV_HomeWork
+
+OpenCV Tkinter GUI
 
 使用tkinter當作程式之GUI
 
